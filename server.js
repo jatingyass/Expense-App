@@ -1,5 +1,7 @@
 const express = require('express');
 const path = require('path');
+const bodyParser = require('body-parser');
+const db = require('./config/db');
 
 // Initialize app
 const app = express();
