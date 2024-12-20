@@ -9,7 +9,7 @@ router.post('/', (req, res) => {
 
 
     const query = 'SELECT * FROM users WHERE email = ?';
-    db.query(query, [email], (err, result) => {
+    db.query(query, [email], async(err, result) => {
         // console.log(result);
         if(err){
             console.log('error checking email:', err);
@@ -17,14 +17,22 @@ router.post('/', (req, res) => {
         }
 
         if(result.length > 0){
+            //user exists
             const user = result[0];
             console.log(user);
     
-            if(user.password === password){
-                res.status(200).json({success: true, message: "User logged in successfully"});
-            }else{
-                return res.status(400).json({success: false, message: 'Password is incorrect'});
-            }
+          try{
+              const isMacth = await bcrypt.compare(password, user.password);
+
+              if(isMacth){
+                  res.status(200).json({success: true, message: "User logged in successfully"});
+              }else{
+                  return res.status(400).json({success: false, message: 'Password is incorrect'});
+              }
+          }catch(err){
+            console.log('error comparing passwords:', err);
+            res.status(500).json({ success: false, message: 'error during login'});
+          }
         }else{
             return res.status(404).send('User not found');
         }
