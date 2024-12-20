@@ -8,7 +8,10 @@ document.getElementById('login-form').addEventListener('submit', function(event)
     axios.post('/login', { email, password })
         .then(res => {
             if (res.data.success) {
-                alert('Login successful!');
+                localStorage.setItem('userId', res.data.userId); // Save userId in localStorage
+                console.log('User  ID:', res.data.userId); // Ensure this is set correctly
+                  alert('Login successful!');
+                  window.location.href = './addExpense.html';
             } else {
                 document.getElementById('error-msg').innerText = res.data.message;
             }
