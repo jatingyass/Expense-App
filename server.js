@@ -17,6 +17,8 @@ const signupRoute = require('./routes/singnupRoute');
 const loginRoute = require('./routes/loginRoute');
 const addExpenseRoute = require('./routes/addExpenseRoute');
 const fetchExpensesRoute = require('./routes/fetchExpensesRoute');
+const deleteExpenseRoute = require('./routes/deleteExpenseRoute');
+
 
 // Use routes
 app.use('/check-email', checkEmailRoute);
@@ -24,6 +26,8 @@ app.use('/signup', signupRoute);
 app.use('/login', loginRoute);
 app.use('/add-expense', addExpenseRoute);
 app.use('/fetch-expenses', fetchExpensesRoute);
+app.use('/delete-expense', deleteExpenseRoute);
+
 
 // Start server
 app.listen(3000, () => {

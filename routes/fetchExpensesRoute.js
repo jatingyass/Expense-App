@@ -5,7 +5,7 @@ const db = require('../config/db');
 router.get('/', (req, res) => {
     const { userId } = req.query;
 
-    const query = 'SELECT * FROM expenses WHERE userId = ?';
+    const query = 'SELECT * FROM expenses WHERE user_Id = ?';
     db.query(query, [userId], (err, results) => {
         if (err) {
             console.error('Error fetching expenses:', err);
