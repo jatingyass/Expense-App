@@ -1,30 +1,38 @@
-document.getElementById('login-form').addEventListener('submit', function(event) {
-    event.preventDefault(); // Prevent form from refreshing the page
+document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('login-form').addEventListener('submit', async function (event) {
+        event.preventDefault(); // Prevent form from refreshing the page
 
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
 
-    // Send login request using Axios
-    axios.post('/login', { email, password })
-        .then(res => {
-            if (res.data.success) {
-                localStorage.setItem('userId', res.data.userId); // Save userId in localStorage
-                console.log('User  ID:', res.data.userId); // Ensure this is set correctly
-                  alert('Login successful!');
-                  window.location.href = './addExpense.html';
+        try {
+            const response = await axios.post('/login', { email, password });
+            console.log("reponse data:");
+            if (response.data.success) {
+                // Save token and user info in localStorage
+                localStorage.setItem('token', response.data.token);
+                console.log("hjkjh",response.data.token);
+                 localStorage.setItem('userId', response.data.userId);
+                 localStorage.setItem('is_premium', response.data.is_premium);
+
+                 alert('Login successful!');
+                 window.location.href = './addExpense.html';
+
+
+               
             } else {
-                document.getElementById('error-msg').innerText = res.data.message;
+                document.getElementById('error-msg').innerText = response.data.message;
             }
-        })
-        .catch(err => {
-            // Handle HTTP errors
-            if (err.response && err.response.data && err.response.data.message) {
-                // Display the specific error message from the server
-                document.getElementById('error-msg').innerText = err.response.data.message;
+        } catch (err) {
+            // console.error('Login error:', err);
+
+            // Check if the error message element exists before updating it
+            const errorMsg = document.getElementById('error-msg');
+            if (errorMsg) {
+                errorMsg.innerText = err.response?.data?.message || 'Something went wrong!';
             } else {
-                // Fallback message for unexpected errors
-                document.getElementById('error-msg').innerText = 'Something went wrong!';
+                console.error("Element with id 'error-msg' not found in the DOM.");
             }
-            console.error('Error during login:', err);
-        });
+        }
+    });
 });

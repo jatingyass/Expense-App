@@ -14,7 +14,9 @@
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.20.3",
     "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
     "mysql2": "^3.11.5",
-    "nodemon": "^3.1.9"
+    "nodemon": "^3.1.9",
+    "razorpay": "^2.9.5"
   }
 }

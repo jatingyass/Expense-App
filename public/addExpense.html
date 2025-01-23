@@ -27,9 +27,14 @@
 
         <button type="submit">Add Expense</button>
     </form>
-
+    <div id="status-msg"></div>
+    <button id="leaderboard-btn" style="display: none;">View Leaderboard</button>
+    <button id="rzp-btn">Buy Premium</button>
     <div id="expense-list"></div>
+    
+    <div id="leaderboard"></div>
 
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="addExpense.js"></script>
 </body>

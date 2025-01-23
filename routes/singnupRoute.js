@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../config/db'); // Database connection
+const {db, executeQuery } = require('../config/db'); // Database connection
 const bcrypt = require('bcryptjs');
 
 
@@ -11,7 +11,8 @@ router.post('/', async(req, res) => {
        const hashedPassword = await bcrypt.hash(password, 10);
 
     const query = 'INSERT INTO users (name, email, password) VALUES (?, ?, ?)';
-    db.query(query, [name, email, hashedPassword], (err, result) => {
+    const result = await executeQuery(query, [name, email, hashedPassword], (err, result) => {
+        console.log('Insert result:', result);
         if (err) {
             console.error('Error inserting data:', err);
             return res.status(500).send('Error saving data');
