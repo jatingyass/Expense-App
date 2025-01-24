@@ -19,7 +19,7 @@ const loginRoute = require('./routes/loginRoute');
 const addExpenseRoute = require('./routes/addExpenseRoute');
 const fetchExpensesRoute = require('./routes/fetchExpensesRoute');
 const deleteExpenseRoute = require('./routes/deleteExpenseRoute');
-const authRoutes = require('./routes/auth');
+const authRoutes = require('./middleware/auth');
 const razorpayRoute = require('./routes/razorpayRoute'); // Import Razorpay route
 const leaderboardRoutes = require('./routes/leaderboardRoute');
 

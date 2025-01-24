@@ -197,7 +197,7 @@ document.getElementById('leaderboard-btn').addEventListener('click', function() 
 
         const users = res.data.leaderboard[0];
         console.log(users);
-        // users.sort((a, b) => b.total_expense - a.total_expense); // Sort users by expense (descending)
+         users.sort((a, b) => b.total_expense - a.total_expense); // Sort users by expense (descending)
 
         users.forEach(user => {
             console.log(user.name);

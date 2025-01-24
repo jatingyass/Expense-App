@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const authenticate = require('./auth');
+const authenticate = require('../middleware/auth');
 const { db, executeQuery } = require('../config/db');
 
 // Get Expenses for the authenticated user
