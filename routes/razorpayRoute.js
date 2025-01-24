@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Razorpay = require('razorpay');
 const {db, executeQuery} = require('../config/db');
-const authenticate = require('./auth');
+const authenticate = require('../middleware/auth');
 
 const razorpay = new Razorpay({
     key_id: 'rzp_test_g9o5t7MyUYqjBf', // Replace with your Razorpay key ID
