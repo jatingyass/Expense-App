@@ -26,8 +26,45 @@
 // module.exports = router;
 
 
+// const express = require('express');
+// const { db, executeQuery } = require('../config/db'); // Import db connection
+// const authenticate = require('../middleware/auth');
+// const router = express.Router();
+
+// // Add Expense - only for the authenticated user
+// router.post('/', authenticate, async (req, res) => {
+//     const { amount, description, category } = req.body;
+//     const userId = req.userId;
+
+//     if (!amount || !description || !category) {
+//         return res.status(400).json({ success: false, message: 'All fields are required!' });
+//     }
+
+//     try {
+//         //Insert Expense
+//         const insertQuery = 'INSERT INTO expenses (user_id, amount, description, category) VALUES (?, ?, ?, ?)';
+//         await executeQuery(insertQuery, [userId, amount, description, category]);
+
+//         // Update total_expense in users table
+//         const updateQuery = `
+//             UPDATE users 
+//             SET total_expense = (SELECT COALESCE(SUM(amount), 0) FROM expenses WHERE user_id = ?)
+//             WHERE id = ?;
+//         `;
+//         await executeQuery(updateQuery, [userId, userId]);
+
+//         res.status(200).json({ success: true, message: 'Expense added and total_expense updated successfully!' });
+//     } catch (err) {
+//         console.error('Database error:', err.message);
+//         return res.status(500).json({ success: false, message: 'Database error' });
+//     }
+// });
+
+// module.exports = router;
+
+
 const express = require('express');
-const { db, executeQuery } = require('../config/db'); // Import db connection
+const { db } = require('../config/db'); // Import db connection
 const authenticate = require('../middleware/auth');
 const router = express.Router();
 
@@ -40,10 +77,14 @@ router.post('/', authenticate, async (req, res) => {
         return res.status(400).json({ success: false, message: 'All fields are required!' });
     }
 
+    const connection = await db.getConnection(); // Get MySQL connection for transaction
+
     try {
-        //Insert Expense
+        await connection.beginTransaction(); // Start transaction
+
+        // Insert Expense
         const insertQuery = 'INSERT INTO expenses (user_id, amount, description, category) VALUES (?, ?, ?, ?)';
-        await executeQuery(insertQuery, [userId, amount, description, category]);
+        await connection.query(insertQuery, [userId, amount, description, category]);
 
         // Update total_expense in users table
         const updateQuery = `
@@ -51,12 +92,18 @@ router.post('/', authenticate, async (req, res) => {
             SET total_expense = (SELECT COALESCE(SUM(amount), 0) FROM expenses WHERE user_id = ?)
             WHERE id = ?;
         `;
-        await executeQuery(updateQuery, [userId, userId]);
+        await connection.query(updateQuery, [userId, userId]);
 
+        await connection.commit(); // Commit transaction if both queries succeed
         res.status(200).json({ success: true, message: 'Expense added and total_expense updated successfully!' });
+
     } catch (err) {
-        console.error('Database error:', err.message);
-        return res.status(500).json({ success: false, message: 'Database error' });
+        await connection.rollback(); // Rollback if any error occurs
+        console.error('Transaction Error:', err.message);
+        res.status(500).json({ success: false, message: 'Database error' });
+
+    } finally {
+        connection.release(); // Release connection back to pool
     }
 });
 

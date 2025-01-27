@@ -28,26 +28,51 @@ router.get('/premiummembership', authenticate, async (req, res) => {
     }
 });
 
-// Route to update transaction status
+// // Route to update transaction status
+// router.post('/updatetransactionstatus', authenticate, async (req, res) => {
+//     const { order_id, payment_id, status } = req.body;
+
+//     try {
+//         // Update the order status in the database
+//         const updateOrderStatus = db.query('UPDATE orders SET status = ?, payment_id = ? WHERE id = ?', [status, payment_id, order_id]);
+
+//         let updateUserStatus;
+//         if (status === 'SUCCESSFUL') {
+//             const userId = req.userId;
+//             updateUserStatus = db.query('UPDATE users SET is_premium = ? WHERE id = ?', [true, userId]);
+//         }
+
+//         await Promise.all([updateOrderStatus, updateUserStatus].filter(Boolean));
+
+//         res.status(200).json({ success: true, message: 'Transaction status updated' });
+//     } catch (error) {
+//         console.error('Error updating transaction status:', error);
+//         res.status(500).json({ success: false, message: 'Error updating transaction status' });
+//     }
+// });
+
+// module.exports = router;
+
+
+// razorRoute.js
 router.post('/updatetransactionstatus', authenticate, async (req, res) => {
     const { order_id, payment_id, status } = req.body;
+    const connection = await db.getConnection();
+    await connection.beginTransaction();
 
     try {
-        // Update the order status in the database
-        const updateOrderStatus = db.query('UPDATE orders SET status = ?, payment_id = ? WHERE id = ?', [status, payment_id, order_id]);
-
-        let updateUserStatus;
+        await executeQuery('UPDATE orders SET status = ?, payment_id = ? WHERE id = ?', [status, payment_id, order_id]);
         if (status === 'SUCCESSFUL') {
             const userId = req.userId;
-            updateUserStatus = db.query('UPDATE users SET is_premium = ? WHERE id = ?', [true, userId]);
+            await executeQuery('UPDATE users SET is_premium = ? WHERE id = ?', [true, userId]);
         }
-
-        await Promise.all([updateOrderStatus, updateUserStatus].filter(Boolean));
-
+        await connection.commit();
         res.status(200).json({ success: true, message: 'Transaction status updated' });
     } catch (error) {
-        console.error('Error updating transaction status:', error);
+        await connection.rollback();
         res.status(500).json({ success: false, message: 'Error updating transaction status' });
+    } finally {
+        connection.release();
     }
 });
 
