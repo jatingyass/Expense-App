@@ -22,6 +22,7 @@ const deleteExpenseRoute = require('./routes/deleteExpenseRoute');
 const authRoutes = require('./middleware/auth');
 const razorpayRoute = require('./routes/razorpayRoute'); // Import Razorpay route
 const leaderboardRoutes = require('./routes/leaderboardRoute');
+const forgotPasswordRoute = require("./routes/forgotPasswordRoute");
 
 
 
@@ -35,6 +36,7 @@ app.use('/delete-expense', deleteExpenseRoute);
 app.use('/api/auth', authRoutes);
 app.use('/purchase', razorpayRoute); // Use Razorpay route
 app.use('/leaderboard', leaderboardRoutes);
+app.use("/password", forgotPasswordRoute);
 
 app.get('/leaderboard', (req, res) => {
     console.log(req.headers); // Check if the request has correct headers
