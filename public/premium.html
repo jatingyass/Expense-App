@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Day to Day Expenses</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <div class="container mt-4">
+        <h2 class="text-center">Day to Day Expenses</h2>
+        <p class="text-end date-time">16 March 2021, 01:16 PM</p>
+
+        <!-- Monthly Report Table -->
+        <h4>March 2021</h4>
+        <div class="table-responsive">
+            <table class="table table-bordered text-center" id="monthly-report">
+                <thead class="table-primary">
+                    <tr>
+                        <th>Date</th>
+                        <th>Description</th>
+                        <th>Category</th>
+                        <th>Income</th>
+                        <th>Expense</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <!-- Yearly Report -->
+        <h4 class="mt-4">Yearly Report</h4>
+        <div class="table-responsive">
+            <table class="table table-bordered text-center" id="yearly-report">
+                <thead class="table-secondary">
+                    <tr>
+                        <th>Month</th>
+                        <th>Income</th>
+                        <th>Expense</th>
+                        <th>Savings</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <!-- Notes Section -->
+        <h4 class="mt-4">Notes Report 2021</h4>
+        <div class="table-responsive">
+            <table class="table table-bordered text-center" id="notes-report">
+                <thead class="table-light">
+                    <tr>
+                        <th>Date</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Floating Download Button -->
+    <button class="download-btn" id="download-btn">&#x2B07;</button>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+    // Sample Data (Simulating Database)
+    const monthlyExpenses = [
+        { date: "01-03-2021", description: "Milk", category: "Milk", income: "", expense: "60.00" },
+        { date: "04-03-2021", description: "Salary", category: "Salary", income: "40,000.00", expense: "0.00" },
+        { date: "04-03-2021", description: "Fruits", category: "Fruits", income: "", expense: "500.00" },
+        { date: "04-03-2021", description: "Medicines", category: "Health", income: "", expense: "50.00" }
+    ];
+
+    const yearlyReport = [{ month: "March", income: "60,000.00", expense: "5,670.00", savings: "54,330.00" }];
+
+    const notes = [
+        { date: "11-02-2021", note: "Gave advance to construction." },
+        { date: "16-02-2021", note: "Test entry" }
+    ];
+
+    // Function to populate table
+    function populateTable(tableId, data, columns) {
+        const tableBody = document.querySelector(`#${tableId} tbody`);
+        tableBody.innerHTML = ""; // Clear table first
+
+        data.forEach((row) => {
+            const tr = document.createElement("tr");
+            columns.forEach((col) => {
+                const td = document.createElement("td");
+                td.innerText = row[col] || ""; // Fill cell
+                tr.appendChild(td);
+            });
+            tableBody.appendChild(tr);
+        });
+    }
+
+    // Populate Tables
+    populateTable("monthly-report", monthlyExpenses, ["date", "description", "category", "income", "expense"]);
+    populateTable("yearly-report", yearlyReport, ["month", "income", "expense", "savings"]);
+    populateTable("notes-report", notes, ["date", "note"]);
+
+    // PDF Download Functionality
+    document.getElementById("download-btn").addEventListener("click", function () {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        doc.setFontSize(16);
+        doc.text("Day to Day Expenses", 80, 10);
+
+        let yPos = 20;
+        doc.setFontSize(12);
+
+        monthlyExpenses.forEach((item) => {
+            doc.text(`${item.date} | ${item.description} | ${item.category} | ${item.income} | ${item.expense}`, 10, yPos);
+            yPos += 10;
+        });
+
+        doc.addPage();
+        doc.text("Yearly Report", 80, 10);
+        yPos = 20;
+        yearlyReport.forEach((item) => {
+            doc.text(`${item.month} | ${item.income} | ${item.expense} | ${item.savings}`, 10, yPos);
+            yPos += 10;
+        });
+
+        doc.addPage();
+        doc.text("Notes", 80, 10);
+        yPos = 20;
+        notes.forEach((item) => {
+            doc.text(`${item.date} | ${item.note}`, 10, yPos);
+            yPos += 10;
+        });
+
+        doc.save("Expenses_Report.pdf");
+    });
+});
+
+    </script>
+</body>
+</html>
