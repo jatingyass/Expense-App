@@ -147,7 +147,7 @@ document.getElementById('rzp-btn').onclick = async function (e) {
                 }
             },
             prefill: {
-                name: 'User    Name', // Replace with actual user name
+                name: 'User Name', // Replace with actual user name
                 email: 'user@example.com', // Replace with actual user email
             },
             theme: {
