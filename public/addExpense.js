@@ -31,16 +31,132 @@ document.getElementById('expense-form').addEventListener('submit', function(even
 });
  
 
+// document.addEventListener("DOMContentLoaded", function () {
+//     fetchExpenses(currentPage); // Ensure it starts with the correct page
+// });
+
+// let currentPage = 1;
+// let totalPages = 1;
+// const itemsPerPage = 10; // Adjust as needed
+
+// // ** Fetch & Display Expenses in Table **
+// function fetchExpenses(page = 1) { // Accept page as a parameter
+//     const token = localStorage.getItem("token");
+
+//     if (!token) {
+//         alert("User is not authenticated");
+//         return;
+//     }
+
+//     axios.get(`/fetch-expenses?page=${page}&limit=${itemsPerPage}`, { // Pass page & limit to backend
+//         headers: { Authorization: `Bearer ${token}` }
+//     })
+//     .then(res => {
+//         console.log("Fetched expenses:", res.data.expenses);
+//         const expenses = res.data.expenses;
+//         const expenseList = document.getElementById("expense-list");
+//         expenseList.innerHTML = ''; // Clear previous data
+
+//         if (expenses.length > 0) {
+//             const isPremium = expenses[0].is_premium;
+//             console.log("Premium Status:", isPremium);
+
+//             if (isPremium) {
+//                 document.getElementById("rzp-btn").style.visibility = "hidden";
+//                 document.getElementById("status-msg").innerText = "You are a premium user";
+//                 document.getElementById("leaderboard-btn").style.display = "block";
+//                 document.getElementById("download-btn").style.display = "block";  // Show download button for premium users
+//             }
+//         }
+
+//         // Select table body where data will be inserted
+//         const tbody = document.getElementById("expense-list");
+//         tbody.innerHTML = "";
+
+//         totalPages = res.data.totalPages;
+//         document.getElementById("page-info").innerText = `Page ${currentPage} of ${totalPages}`;
+
+//         // Enable/Disable buttons
+//         document.getElementById("prev-btn").disabled = currentPage === 1;
+//         document.getElementById("next-btn").disabled = currentPage === totalPages;
+
+//         let totalExpense = 0;
+//         let totalIncome = 0;
+//         let Saving = 0;
+
+//         expenses.forEach(expense => {
+//             const tr = document.createElement("tr");
+
+//             // Format date properly
+//             const date = new Date(expense.created_at).toLocaleDateString();
+
+//             tr.innerHTML = `
+//                 <td>${date}</td>
+//                 <td>${expense.description}</td>
+//                 <td>${expense.category}</td>
+//                 <td>₹${expense.income}</td>
+//                 <td>₹${expense.amount}</td>
+//                 <td>
+//                     <button class="btn btn-danger btn-sm" onclick="deleteExpense(${expense.id})">Delete</button>
+//                 </td>
+//             `;
+
+//             tbody.appendChild(tr);
+//             totalIncome += parseFloat(expense.income);
+//             totalExpense += parseFloat(expense.amount);
+//             Saving = totalIncome - totalExpense;
+//         });
+
+//         // Add Total Row
+//         const totalRow = document.createElement("tr");
+//         totalRow.innerHTML = `
+//             <td colspan="3"><strong>Total</strong></td>
+//             <td><strong>₹${totalIncome.toFixed(2)}</strong></td>
+//             <td><strong>₹${totalExpense.toFixed(2)}</strong></td>
+//             <td></td>
+//         `;
+//         const savings = document.createElement("tr");
+//         savings.innerHTML = `<td colspan="6"><strong>Savings = ₹${Saving.toFixed(2)}</strong></td>`;
+
+//         tbody.appendChild(totalRow);
+//         tbody.appendChild(savings);
+//     })
+//     .catch(err => {
+//         console.error("Error fetching expenses:", err);
+//         alert("Error fetching expenses");
+//     });
+// }
+
+// // ** Pagination Buttons Event Listeners **
+// document.getElementById("prev-btn").addEventListener("click", () => {
+//     if (currentPage > 1) {
+//         currentPage--;
+//         fetchExpenses(currentPage);
+//     }
+// });
+
+// document.getElementById("next-btn").addEventListener("click", () => {
+//     if (currentPage < totalPages) {
+//         currentPage++;
+//         fetchExpenses(currentPage);
+//     }
+// });
+
+
 document.addEventListener("DOMContentLoaded", function () {
-    fetchExpenses(currentPage); // Ensure it starts with the correct page
+    const savedLimit = localStorage.getItem("expensesPerPage");
+    itemsPerPage = savedLimit ? parseInt(savedLimit, 10) : 10;
+
+    document.getElementById("expense-limit").value = itemsPerPage;
+    fetchExpenses(currentPage, itemsPerPage);
 });
 
 let currentPage = 1;
 let totalPages = 1;
-const itemsPerPage = 10; // Adjust as needed
+let itemsPerPage = 10;
 
 // ** Fetch & Display Expenses in Table **
-function fetchExpenses(page = 1) { // Accept page as a parameter
+function fetchExpenses(page = 1, limit = itemsPerPage) {
     const token = localStorage.getItem("token");
 
     if (!token) {
@@ -48,14 +164,14 @@ function fetchExpenses(page = 1) { // Accept page as a parameter
         return;
     }
 
-    axios.get(`/fetch-expenses?page=${page}&limit=${itemsPerPage}`, { // Pass page & limit to backend
+    axios.get(`/fetch-expenses?page=${page}&limit=${limit}`, {
         headers: { Authorization: `Bearer ${token}` }
     })
     .then(res => {
         console.log("Fetched expenses:", res.data.expenses);
         const expenses = res.data.expenses;
         const expenseList = document.getElementById("expense-list");
-        expenseList.innerHTML = ''; // Clear previous data
+        expenseList.innerHTML = '';
 
         if (expenses.length > 0) {
             const isPremium = expenses[0].is_premium;
@@ -65,18 +181,14 @@ function fetchExpenses(page = 1) { // Accept page as a parameter
                 document.getElementById("rzp-btn").style.visibility = "hidden";
                 document.getElementById("status-msg").innerText = "You are a premium user";
                 document.getElementById("leaderboard-btn").style.display = "block";
-                document.getElementById("download-btn").style.display = "block";  // Show download button for premium users
+                document.getElementById("download-btn").style.display = "block";
             }
         }
-
-        // Select table body where data will be inserted
-        const tbody = document.getElementById("expense-list");
-        tbody.innerHTML = "";
 
         totalPages = res.data.totalPages;
         document.getElementById("page-info").innerText = `Page ${currentPage} of ${totalPages}`;
 
-        // Enable/Disable buttons
+        // Enable/Disable pagination buttons
         document.getElementById("prev-btn").disabled = currentPage === 1;
         document.getElementById("next-btn").disabled = currentPage === totalPages;
 
@@ -86,40 +198,37 @@ function fetchExpenses(page = 1) { // Accept page as a parameter
 
         expenses.forEach(expense => {
             const tr = document.createElement("tr");
-
-            // Format date properly
             const date = new Date(expense.created_at).toLocaleDateString();
 
             tr.innerHTML = `
                 <td>${date}</td>
                 <td>${expense.description}</td>
                 <td>${expense.category}</td>
-                <td>₹${expense.income}</td>
-                <td>₹${expense.amount}</td>
+                <td>Rs ${expense.income}</td>
+                <td>Rs ${expense.amount}</td>
                 <td>
                     <button class="btn btn-danger btn-sm" onclick="deleteExpense(${expense.id})">Delete</button>
                 </td>
             `;
 
-            tbody.appendChild(tr);
+            expenseList.appendChild(tr);
             totalIncome += parseFloat(expense.income);
             totalExpense += parseFloat(expense.amount);
             Saving = totalIncome - totalExpense;
         });
 
-        // Add Total Row
         const totalRow = document.createElement("tr");
         totalRow.innerHTML = `
             <td colspan="3"><strong>Total</strong></td>
-            <td><strong>₹${totalIncome.toFixed(2)}</strong></td>
-            <td><strong>₹${totalExpense.toFixed(2)}</strong></td>
+            <td><strong>Rs ${totalIncome.toFixed(2)}</strong></td>
+            <td><strong>Rs ${totalExpense.toFixed(2)}</strong></td>
             <td></td>
         `;
         const savings = document.createElement("tr");
-        savings.innerHTML = `<td colspan="6"><strong>Savings = ₹${Saving.toFixed(2)}</strong></td>`;
+        savings.innerHTML = `<td colspan="6"><strong>Savings = Rs ${Saving.toFixed(2)}</strong></td>`;
 
-        tbody.appendChild(totalRow);
-        tbody.appendChild(savings);
+        expenseList.appendChild(totalRow);
+        expenseList.appendChild(savings);
     })
     .catch(err => {
         console.error("Error fetching expenses:", err);
@@ -131,15 +240,23 @@ function fetchExpenses(page = 1) { // Accept page as a parameter
 document.getElementById("prev-btn").addEventListener("click", () => {
     if (currentPage > 1) {
         currentPage--;
-        fetchExpenses(currentPage);
+        fetchExpenses(currentPage, itemsPerPage);
     }
 });
 
 document.getElementById("next-btn").addEventListener("click", () => {
     if (currentPage < totalPages) {
         currentPage++;
-        fetchExpenses(currentPage);
+        fetchExpenses(currentPage, itemsPerPage);
     }
+});
+
+// ** Update Expense Limit Based on User Selection **
+document.getElementById("expense-limit").addEventListener("change", (event) => {
+    itemsPerPage = parseInt(event.target.value, 10);
+    localStorage.setItem("expensesPerPage", itemsPerPage);
+    currentPage = 1;
+    fetchExpenses(currentPage, itemsPerPage);
 });
 
 

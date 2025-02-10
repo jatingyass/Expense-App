@@ -43,12 +43,27 @@
         <button id="rzp-btn" class="btn btn-danger">Buy Premium</button>
     </div>
 
+   <!-- User Preference for Expenses Per Page -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <label for="expense-limit" class="me-2"><strong>Expenses per page:</strong></label>
+        <select id="expense-limit" class="form-control w-auto d-inline-block">
+            <option value="5">5</option>
+            <option value="10" selected>10</option>
+            <option value="20">20</option>
+            <option value="30">30</option>
+            <option value="40">40</option>
+        </select>
+    </div>
+
     <!-- Pagination Controls -->
-<div class="d-flex justify-content-center my-3">
-    <button id="prev-btn" class="btn btn-secondary me-2" disabled>⬅ Prev</button>
-    <span id="page-info">Page 1</span>
-    <button id="next-btn" class="btn btn-secondary ms-2">Next ➡</button>
+    <div>
+        <button id="prev-btn" class="btn btn-secondary me-2" disabled>⬅ Prev</button>
+        <span id="page-info">Page 1</span>
+        <button id="next-btn" class="btn btn-secondary ms-2">Next ➡</button>
+    </div>
 </div>
+
 
     <!-- Expense Report Table -->
     <div id="expense-table" class="table-responsive">
