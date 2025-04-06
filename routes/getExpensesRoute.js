@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const authenticate = require('../middleware/auth');
-const { addExpense } = require('../controllers/addExpenseController');
+const { getExpenses } = require('../controllers/getExpensesController');
 
-router.post('/add-expense', authenticate, addExpense);
+router.get('/fetch-expenses', authenticate, getExpenses);
 
 module.exports = router;

@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 localStorage.setItem('token', response.data.token);
                 console.log("hjkjh",response.data.token);
                  localStorage.setItem('userId', response.data.userId);
-                 localStorage.setItem('is_premium', response.data.is_premium);
+                 localStorage.setItem('isPremium', response.data.isPremium ? 'true' : 'false');
 
                  alert('Login successful!');
                  window.location.href = './addExpense.html';

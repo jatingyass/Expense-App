@@ -1,24 +1,35 @@
-// Add event listener to the form
+
 document.getElementById('signup-form').addEventListener('submit', function(event) {
-     event.preventDefault(); // Prevent form submission initially
+    event.preventDefault();
 
+    const name = document.getElementById('name').value;
     const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
 
-    // Perform Axios request to check if the email already exists
-    axios.post('/check-email', { email: email })
+    // Check if email exists
+    axios.post('/check-email', { email })
         .then(response => {
             if (response.data.exists) {
-                // Email exists
                 document.getElementById('email-error').innerText = 'Email already exists.';
             } else {
-                // Email does not exist; submit the form
-                document.getElementById('signup-form').submit();
-                // window.location.href = './login.html';
-
+                // Perform signup without phone number
+                axios.post('/signup', { name, email, password })
+                    .then(response => {
+                        if (response.data.success) {
+                            alert('Signup successful! Redirecting to login page...');
+                            window.location.href = 'login.html';
+                        } else {
+                            alert(response.data.message || 'Signup failed. Please try again.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Signup error:', error);
+                        alert('Error during signup. Please try again.');
+                    });
             }
         })
         .catch(error => {
             console.error('Error checking email:', error);
+            alert('Error checking email. Please try again.');
         });
 });
-
