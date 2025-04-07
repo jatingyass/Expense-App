@@ -2,7 +2,7 @@
 const Sequelize = require('sequelize');
 const sequelize = require('../config/db');
 
-const DownloadHistory = require('./downloadHistory');
+const DownloadHistory = require('./downloadhistory');
 // Import and initialize models
 const UserModel = require('./user');
 const ExpenseModel = require('./expense');
