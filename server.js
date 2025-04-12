@@ -43,10 +43,12 @@ app.use("/password", forgotPasswordRoute);
 app.use('/api', downloadHistoryRoute);
 
 
+app.use('/api', express.static(path.join(__dirname, 'public')));
+
 sequelize.sync()
   .then(() => {
+    console.log('hlo bhai, Database connected!');
     console.log('Database synced!');
-    console.log('Server is running on http://localhost:3000');
   })
   .catch((err) => {
     console.error('Error syncing database:', err);
