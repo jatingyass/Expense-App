@@ -47,7 +47,7 @@ app.use('/api', express.static(path.join(__dirname, 'public')));
 
 sequelize.sync()
   .then(() => {
-    console.log('hlo bhai, Database connected!');
+    console.log('hlo dosto, Database connected!');
     console.log('Database synced!');
   })
   .catch((err) => {
