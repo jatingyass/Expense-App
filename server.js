@@ -3,6 +3,8 @@ const path = require('path');
 const bodyParser = require('body-parser');
 const db = require('./config/db');
 const { sequelize } = require('./models');
+require('dotenv').config();
+
 
 // Initialize app
 const app = express();
@@ -40,20 +42,18 @@ app.use('/leaderboard', leaderboardRoutes);
 app.use("/password", forgotPasswordRoute);
 app.use('/api', downloadHistoryRoute);
 
-// app.get('/leaderboard', (req, res) => {
-//     console.log(req.headers); // Check if the request has correct headers
-//     res.send('Leaderboard data');
-// });
 
 sequelize.sync()
   .then(() => {
     console.log('Database synced!');
+    console.log('Server is running on http://localhost:3000');
   })
   .catch((err) => {
     console.error('Error syncing database:', err);
   });
 
 // Start server
-app.listen(3000, () => {
+app.listen(process.env.PORT, () => {
     console.log(`Server is running on http://localhost:3000`);
+
 });

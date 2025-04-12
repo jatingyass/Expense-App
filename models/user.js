@@ -16,8 +16,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       isPremium: { 
         type: DataTypes.BOOLEAN, 
-        defaultValue: false,
-        //  field: 'ispremium'
+        defaultValue: false
       }
     });
   
