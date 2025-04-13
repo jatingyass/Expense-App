@@ -16,6 +16,7 @@ exports.getLeaderboard = async (req, res) => {
             include: [{
                 model: Expense,
                 attributes: [],
+                as: 'expenses',
             }],
             group: ['User.id'],
             order: [[sequelize.literal('total_expense'), 'DESC']]

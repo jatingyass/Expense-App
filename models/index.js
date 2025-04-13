@@ -17,7 +17,7 @@ const ForgotPasswordRequest = ForgotPasswordRequestModel(sequelize, Sequelize.Da
 const Order = OrderModel(sequelize, Sequelize.DataTypes);
 
 // Associations
-User.hasMany(Expense, { foreignKey: 'userId' });
+User.hasMany(Expense, { foreignKey: 'userId', as: 'expenses' });
 User.hasMany(ForgotPasswordRequest);
 User.hasMany(DownloadHistory, { foreignKey: 'userId' });
 User.hasMany(Order, { foreignKey: 'userId' });
