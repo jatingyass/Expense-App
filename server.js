@@ -22,7 +22,7 @@ const addExpenseRoute = require('./routes/addExpenseRoute');
 const getExpensesRoute = require('./routes/getExpensesRoute');
 const deleteExpenseRoute = require('./routes/deleteExpenseRoute');
 const authRoutes = require('./middleware/auth');
-const razorpayRoute = require('./routes/razorpayRoute'); // Import Razorpay route
+const razorpayRoute = require('./routes/razorpayRoute');
 const leaderboardRoutes = require('./routes/leaderboardRoute');
 const forgotPasswordRoute = require("./routes/forgotPasswordRoute");
 const downloadHistoryRoute = require('./routes/downloadRoutes');
@@ -37,7 +37,7 @@ app.use('/', addExpenseRoute);
 app.use('/api', getExpensesRoute);
 app.use('/delete-expense', deleteExpenseRoute);
 app.use('/api/auth', authRoutes);
-app.use('/purchase', razorpayRoute); // Use Razorpay route
+app.use('/purchase', razorpayRoute); 
 app.use('/leaderboard', leaderboardRoutes);
 app.use("/password", forgotPasswordRoute);
 app.use('/api', downloadHistoryRoute);
@@ -45,8 +45,8 @@ app.use('/api', downloadHistoryRoute);
 
 sequelize.sync()
   .then(() => {
-
-    console.log('Database synced!');
+   console.log('Database connected!');
+    // console.log('Database synced!');
   })
   .catch((err) => {
     console.error('Error syncing database:', err);
@@ -58,4 +58,3 @@ app.listen(process.env.PORT, () => {
 
 });
 
-console.log(thik h sab kya?);
