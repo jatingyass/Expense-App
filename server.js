@@ -45,8 +45,7 @@ app.use('/api', downloadHistoryRoute);
 
 sequelize.sync()
   .then(() => {
-   console.log('Database connected!');
-    // console.log('Database synced!');
+    console.log('Database synced!');
   })
   .catch((err) => {
     console.error('Error syncing database:', err);
