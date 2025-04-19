@@ -1,8 +1,9 @@
 
 const { v4: uuidv4 } = require('uuid');
 const nodemailer = require('nodemailer');
-const ForgotPasswordRequest = require('../models/ForgotPasswordRequests');
-const User = require('../models/user');
+const {ForgotPasswordRequest} = require('../models');
+const {User} = require('../models');
+const bcrypt = require('bcrypt');
 require('dotenv').config();
 
 const transporter = nodemailer.createTransport({
@@ -32,7 +33,7 @@ exports.forgotPassword = async (req, res) => {
         const resetId = uuidv4();
         await ForgotPasswordRequest.create({
             id: resetId,
-            userId: user.id,
+            UserId: user.id,
             isactive: 'ACTIVE'
         });
 
@@ -85,8 +86,9 @@ exports.updatePassword = async (req, res) => {
         if (!request) {
             return res.status(400).json({ success: false, message: 'Invalid request' });
         }
-
-        const user = await User.findByPk(request.userId);
+        
+        console.log("UserId from request:", request.UserId);
+        const user = await User.findByPk(request.UserId);
         const hashedPassword = await bcrypt.hash(newPassword, 10);
         await user.update({ password: hashedPassword });
 
