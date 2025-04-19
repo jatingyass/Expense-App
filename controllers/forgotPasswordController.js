@@ -38,7 +38,7 @@ exports.forgotPassword = async (req, res) => {
             isactive: 'ACTIVE'
         });
 
-        const resetLink = `http://localhost:3000/password/resetpassword/${resetId}`;
+        const resetLink = `http://13.233.122.125:3000/password/resetpassword/${resetId}`;
         await transporter.sendMail({
             from: process.env.EMAIL_USER,
             to: email,

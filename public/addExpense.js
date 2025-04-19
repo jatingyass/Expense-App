@@ -307,7 +307,7 @@ document.getElementById('rzp-btn').onclick = async function (e) {
             handler: async function (response) {
                 try {
                     // Update transaction status on success
-                    await axios.post('http://localhost:3000/purchase/updatetransactionstatus', {
+                    await axios.post('http://13.233.122.125:3000/purchase/updatetransactionstatus', {
                         order_id: order.id,
                         payment_id: response.razorpay_payment_id,
                         status: 'SUCCESSFUL'
@@ -346,7 +346,7 @@ document.getElementById('rzp-btn').onclick = async function (e) {
         // Handle Payment Failure
         rzp.on('payment.failed', async function (response) {
             try {
-                await axios.post('http://localhost:3000/purchase/updatetransactionstatus', {
+                await axios.post('http://13.233.122.125//purchase/updatetransactionstatus', {
                     order_id: order.id,
                     payment_id: response?.error?.metadata?.payment_id || 'N/A',
                     status: 'FAILED'
