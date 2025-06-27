@@ -1,5 +1,52 @@
 
-  const { Expense, User } = require('../models');
+//   const { Expense, User } = require('../models');
+
+// exports.getExpenses = async (req, res) => {
+//   try {
+//     const userId = req.user?.userId;
+
+//     if (!userId) {
+//       return res.status(400).json({ success: false, message: 'User ID not found.' });
+//     }
+
+//     // Pagination parameters
+//     const page = parseInt(req.query.page, 10) || 1;
+//     const limit = parseInt(req.query.limit, 10) || 10;
+//     const offset = (page - 1) * limit;
+
+//     // Total expenses count for pagination
+//     const totalExpenses = await Expense.count({ where: { userId } });
+//     const totalPages = Math.ceil(totalExpenses / limit);
+
+//     // Fetch paginated expenses
+//     const expenses = await Expense.findAll({
+//       where: { userId },
+//       order: [['createdAt', 'DESC']],
+//       limit,
+//       offset,
+//     });
+
+//     // Fetch user to get isPremium status
+//     const user = await User.findByPk(userId);
+
+//     res.status(200).json({
+//       success: true,
+//       expenses,
+//       totalPages,
+//       isPremium: user ? user.isPremium : false,
+//     });
+//   } catch (error) {
+//     console.error('Error fetching expenses:', error);
+//     res.status(500).json({ success: false, message: 'Error fetching expenses' });
+//   }
+// };
+
+
+
+
+// controllers/getExpensesController.js
+const Expense = require('../models/expense');
+const User = require('../models/user');
 
 exports.getExpenses = async (req, res) => {
   try {
@@ -9,25 +56,23 @@ exports.getExpenses = async (req, res) => {
       return res.status(400).json({ success: false, message: 'User ID not found.' });
     }
 
-    // Pagination parameters
+    // Pagination setup
     const page = parseInt(req.query.page, 10) || 1;
     const limit = parseInt(req.query.limit, 10) || 10;
-    const offset = (page - 1) * limit;
+    const skip = (page - 1) * limit;
 
-    // Total expenses count for pagination
-    const totalExpenses = await Expense.count({ where: { userId } });
+    //MongoDB: Count total expenses
+    const totalExpenses = await Expense.countDocuments({ userId: userId });
     const totalPages = Math.ceil(totalExpenses / limit);
 
-    // Fetch paginated expenses
-    const expenses = await Expense.findAll({
-      where: { userId },
-      order: [['createdAt', 'DESC']],
-      limit,
-      offset,
-    });
+    // MongoDB: Fetch paginated expenses
+    const expenses = await Expense.find({ userId: userId })
+      .sort({ createdAt: -1 }) // Most recent first
+      .limit(limit)
+      .skip(skip);
 
-    // Fetch user to get isPremium status
-    const user = await User.findByPk(userId);
+    // Fetch user to check isPremium
+    const user = await User.findById(userId);
 
     res.status(200).json({
       success: true,

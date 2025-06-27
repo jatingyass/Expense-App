@@ -108,6 +108,8 @@ function fetchExpenses(page = 1, limit = itemsPerPage) {
         let totalIncome = 0;
         let Saving = 0;
 
+       
+
         expenses.forEach(expense => {
             const tr = document.createElement("tr");
             const date = new Date(expense.createdAt).toLocaleDateString();
@@ -122,7 +124,7 @@ function fetchExpenses(page = 1, limit = itemsPerPage) {
                 <td>Rs ${income}</td>
                 <td>Rs ${amount}</td>
                 <td>
-                    <button class="btn btn-danger btn-sm" onclick="deleteExpense(${expense.id})">Delete</button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteExpense('${expense._id}')">Delete</button>
                 </td>
             `;
 
@@ -286,7 +288,7 @@ document.getElementById('rzp-btn').onclick = async function (e) {
 
     try {
         // Fetch order details from backend
-        const response = await axios.get('http://65.2.83.37:3000/purchase/premiummembership', {
+        const response = await axios.get('/purchase/premiummembership', {
             headers: { "Authorization": `Bearer ${token}` }
         });
 
@@ -307,7 +309,7 @@ document.getElementById('rzp-btn').onclick = async function (e) {
             handler: async function (response) {
                 try {
                     // Update transaction status on success
-                    await axios.post('http://65.2.83.37:3000/purchase/updatetransactionstatus', {
+                    await axios.post('/purchase/updatetransactionstatus', {
                         order_id: order.id,
                         payment_id: response.razorpay_payment_id,
                         status: 'SUCCESSFUL'
@@ -315,6 +317,10 @@ document.getElementById('rzp-btn').onclick = async function (e) {
                         headers: { "Authorization": `Bearer ${token}` }
                     });
                    
+                    //Replace token with new one
+                    if (res.data.token) {
+                      localStorage.setItem('token', res.data.token);
+                    }
                      // Mark the user as premium (Direct update)
                     localStorage.setItem('isPremium', 'true');
 
@@ -346,7 +352,7 @@ document.getElementById('rzp-btn').onclick = async function (e) {
         // Handle Payment Failure
         rzp.on('payment.failed', async function (response) {
             try {
-                await axios.post('http://65.2.83.37:3000/purchase/updatetransactionstatus', {
+                await axios.post('/purchase/updatetransactionstatus', {
                     order_id: order.id,
                     payment_id: response?.error?.metadata?.payment_id || 'N/A',
                     status: 'FAILED'
@@ -409,3 +415,9 @@ document.getElementById('leaderboard-btn').addEventListener('click', function() 
 
 // Call fetchExpenses on page load
 fetchExpenses();
+// window.location.reload();
+
+
+
+
+

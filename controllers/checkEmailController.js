@@ -1,5 +1,5 @@
 
-const { User } = require('../models'); // Sequelize Model import
+const { User } = require('../models'); 
 
 // Check if email exists
 exports.checkEmail = async (req, res) => {
@@ -12,7 +12,7 @@ exports.checkEmail = async (req, res) => {
     console.log(`Checking email: ${email}`);
 
     try {
-        const user = await User.findOne({ where: { email } });
+        const user = await User.findOne({ email });
 
         if (user) {
             console.log("Email exists, sending response...");

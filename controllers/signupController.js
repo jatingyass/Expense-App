@@ -12,7 +12,7 @@ exports.signupUser = async (req, res) => {
 
     try {
         // Check if user already exists
-        const existingUser = await User.findOne({ where: { email } });
+        const existingUser = await User.findOne({ email });
 
         if (existingUser) {
             return res.status(409).json({ success: false, message: 'User already exists!' });
@@ -23,9 +23,19 @@ exports.signupUser = async (req, res) => {
 
 
         // Create new user using Sequelize
-        const newUser = await User.create({ name, email, password: hashedPassword, ispremium: false });
+        // const newUser = await User.create({ name, email, password: hashedPassword, ispremium: false });
+         
+        //mongoose
+         const newUser = new User({
+            name,
+            email,
+            password: hashedPassword,
+            isPremium: false // same as ispremium in SQL
+        });
 
-        res.status(201).json({ success: true, message: 'Signup successful', userId: newUser.id });
+        await newUser.save(); // Save to MongoDB
+
+        res.status(201).json({ success: true, message: 'Signup successful', userId: newUser._id });
     } catch (error) {
         console.error('Error during signup:', error);
         res.status(500).json({ success: false, message: 'Error signing up' });

@@ -7,13 +7,13 @@ exports.downloadExpenseReport = async (req, res) => {
         const userId = req.user?.userId;
 
         // ✅ Check if user is Premium
-        const user = await User.findByPk(userId);
+        const user = await User.findById(userId);
         if (!user || !user.isPremium) {
             return res.status(401).json({ success: false, message: "Access denied! Premium users only." });
         }
 
         // ✅ Fetch All Expenses
-        const expenses = await Expense.findAll({ where: { userId } });
+        const expenses = await Expense.find({userId});
 
         if (!expenses.length) {
             return res.status(404).json({ success: false, message: "No expenses found." });
@@ -45,7 +45,7 @@ exports.downloadExpenseReport = async (req, res) => {
 exports.getDownloadHistory = async (req, res) => {
     try {
         const userId = req.user?.userId;
-        const history = await DownloadHistory.findAll({ where: { userId } });
+        const history = await DownloadHistory.find({ userId });
 
         res.status(200).json({ success: true, history });
     } catch (error) {

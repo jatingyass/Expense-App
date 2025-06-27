@@ -13,7 +13,7 @@ exports.loginUser = async (req, res) => {
     }
 
     try {
-        const user = await User.findOne({ where: { email } });
+        const user = await User.findOne({ email });
         
         if (!user) {
             return res.status(404).json({ success: false, message: 'User not found' });
@@ -30,7 +30,7 @@ exports.loginUser = async (req, res) => {
         }
 
         const token = jwt.sign({ 
-            userId: user.id,
+            userId: user._id,
             isPremium: user.isPremium
             },
            SECRET_KEY,
@@ -41,7 +41,7 @@ exports.loginUser = async (req, res) => {
             success: true,
             message: 'Login successful',
             token,
-            userId: user.id,
+            userId: user._id,
             isPremium: user.isPremium
         });
     } catch (err) {
