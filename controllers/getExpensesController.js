@@ -1,42 +1,41 @@
+const { Op } = require('sequelize');
+const { Expense } = require('../models');
+const catchAsync = require('../utils/catchAsync');
 
-  const { Expense, User } = require('../models');
+const getExpenses = catchAsync(async (req, res) => {
+  const userId = req.user.userId;
+  const { page, limit, kind, category, from, to } = req.query;
 
-exports.getExpenses = async (req, res) => {
-  try {
-    const userId = req.user?.userId;
+  const where = { userId };
 
-    if (!userId) {
-      return res.status(400).json({ success: false, message: 'User ID not found.' });
-    }
-
-    // Pagination parameters
-    const page = parseInt(req.query.page, 10) || 1;
-    const limit = parseInt(req.query.limit, 10) || 10;
-    const offset = (page - 1) * limit;
-
-    // Total expenses count for pagination
-    const totalExpenses = await Expense.count({ where: { userId } });
-    const totalPages = Math.ceil(totalExpenses / limit);
-
-    // Fetch paginated expenses
-    const expenses = await Expense.findAll({
-      where: { userId },
-      order: [['createdAt', 'DESC']],
-      limit,
-      offset,
-    });
-
-    // Fetch user to get isPremium status
-    const user = await User.findByPk(userId);
-
-    res.status(200).json({
-      success: true,
-      expenses,
-      totalPages,
-      isPremium: user ? user.isPremium : false,
-    });
-  } catch (error) {
-    console.error('Error fetching expenses:', error);
-    res.status(500).json({ success: false, message: 'Error fetching expenses' });
+  if (kind && kind !== 'all') where.kind = kind;
+  if (category && category !== 'all') where.category = category;
+  if (from || to) {
+    where.occurredAt = {};
+    if (from) where.occurredAt[Op.gte] = new Date(from);
+    if (to) where.occurredAt[Op.lte] = new Date(to);
   }
-};
+
+  const parsedPage = parseInt(page, 10) || 1;
+  const parsedLimit = parseInt(limit, 10) || 10;
+  const offset = (parsedPage - 1) * parsedLimit;
+
+  const { count, rows: expenses } = await Expense.findAndCountAll({
+    where,
+    order: [['occurredAt', 'DESC']],
+    limit: parsedLimit,
+    offset,
+  });
+
+  res.json({
+    expenses,
+    pagination: {
+      total: count,
+      page: parsedPage,
+      limit: parsedLimit,
+      totalPages: Math.ceil(count / parsedLimit),
+    },
+  });
+});
+
+module.exports = { getExpenses };

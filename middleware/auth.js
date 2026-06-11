@@ -1,35 +1,45 @@
-
-const express = require('express');
 const jwt = require('jsonwebtoken');
-const router = express.Router();
+const env = require('../config/env');
+const { User } = require('../models');
+const ApiError = require('../utils/ApiError');
+const catchAsync = require('../utils/catchAsync');
 
-const SECRET_KEY = 'my_super_secret_key_12345!@#';
-
-const authenticate = (req, res, next) => {
-    try {
-        // Extract token from Authorization header
-        const token = req.headers['authorization'];
-
-        if (!token) {
-            return res.status(403).json({ success: false, message: 'Token is required' });
-        }
-
-        const actualToken = token.split(' ')[1]; // Extract token from "Bearer <token>"
-        console.log('Extracted Token:', actualToken);
-
-        // Verify token
-        const decoded = jwt.verify(actualToken, SECRET_KEY);
-        console.log('Decoded Token:', decoded);
-
-         req.user = {
-            userId: decoded.userId,
-            isPremium: decoded.isPremium // Fix applied here ✅
-        };
-
-        next();
-    } catch (err) {
-        return res.status(401).json({ success: false, message: 'Invalid or expired token' });
-    }
+const extractToken = (req) => {
+  const header = req.headers.authorization;
+  if (header && header.startsWith('Bearer ')) return header.slice(7);
+  return null;
 };
 
-module.exports = authenticate;
+// Authenticates the request via JWT.
+// Note: we deliberately re-fetch isPremium from the DB on every request
+// rather than trusting the token claim. The token-baked premium flag in v1
+// became stale the moment a user paid; this fix keeps premium state correct.
+const authenticate = catchAsync(async (req, res, next) => {
+  const token = extractToken(req);
+  if (!token) throw ApiError.unauthorized('Authentication token missing');
+
+  const decoded = jwt.verify(token, env.JWT_SECRET);
+
+  const user = await User.findByPk(decoded.userId, {
+    attributes: ['id', 'name', 'email', 'isPremium'],
+  });
+  if (!user) throw ApiError.unauthorized('User no longer exists');
+
+  req.user = {
+    userId: user.id,
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    isPremium: user.isPremium,
+  };
+  next();
+});
+
+const requirePremium = (req, res, next) => {
+  if (!req.user?.isPremium) {
+    throw ApiError.forbidden('Premium membership required');
+  }
+  next();
+};
+
+module.exports = { authenticate, requirePremium };

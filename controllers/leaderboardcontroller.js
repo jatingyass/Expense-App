@@ -1,32 +1,31 @@
-
 const { User, Expense, sequelize } = require('../models');
+const catchAsync = require('../utils/catchAsync');
 
-// Get leaderboard (only for premium users)
-exports.getLeaderboard = async (req, res) => {
-    try {
-        console.log("haa", req.user.isPremium);
-        
-        if (!req.user.isPremium) {
-            return res.status(403).json({ error: 'Access Denied. Upgrade to premium to view the leaderboard.' });
-        }
+// requirePremium middleware gates this route; controller just runs the query.
+const getLeaderboard = catchAsync(async (req, res) => {
+  const leaderboard = await User.findAll({
+    attributes: [
+      'id',
+      'name',
+      [
+        sequelize.fn(
+          'COALESCE',
+          sequelize.fn(
+            'SUM',
+            sequelize.literal("CASE WHEN `expenses`.`kind` = 'expense' THEN `expenses`.`amount` ELSE 0 END"),
+          ),
+          0,
+        ),
+        'totalSpend',
+      ],
+    ],
+    include: [{ model: Expense, attributes: [], as: 'expenses', required: false }],
+    group: ['User.id'],
+    order: [[sequelize.literal('totalSpend'), 'DESC']],
+    subQuery: false,
+  });
 
-        // Fetch total expenses per user using Sequelize
-        const leaderboard = await User.findAll({
-            attributes: ['id', 'name', [sequelize.fn('COALESCE', sequelize.fn('SUM', sequelize.col('expenses.expenseAmount')), 0), 'total_expense']],
-            include: [{
-                model: Expense,
-                attributes: [],
-                as: 'expenses',
-            }],
-            group: ['User.id'],
-            order: [[sequelize.literal('total_expense'), 'DESC']]
-        });
+  res.json({ leaderboard });
+});
 
-        res.status(200).json({ leaderboard });
-        console.log(leaderboard);
-
-    } catch (err) {
-        console.log('Error fetching leaderboard:', err);
-        res.status(500).json({ error: 'Internal server error', details: err.message });
-    }
-};
+module.exports = { getLeaderboard };

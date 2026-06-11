@@ -1,0 +1,54 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: expense_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: expense_app
+      MYSQL_USER: app
+      MYSQL_PASSWORD: apppass
+    ports:
+      - '3308:3306'
+    volumes:
+      - expense_db_data:/var/lib/mysql
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-u', 'app', '-papppass']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  backend:
+    build: .
+    container_name: expense_backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      CORS_ORIGIN: http://localhost:5173
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: expense_app
+      DB_USER: app
+      DB_PASSWORD: apppass
+      JWT_SECRET: expense_app_dev_secret_key_change_in_production_abcd1234
+      JWT_EXPIRES_IN: 7d
+      RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID:-rzp_test_placeholder}
+      RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET:-placeholder_secret}
+      EMAIL_DRIVER: console
+      STORAGE_DRIVER: local
+      LOCAL_UPLOAD_PATH: /app/uploads
+      PASSWORD_RESET_URL: http://localhost:5173/reset-password
+      LOG_LEVEL: info
+    ports:
+      - '3000:3000'
+    volumes:
+      - expense_uploads:/app/uploads
+
+volumes:
+  expense_db_data:
+  expense_uploads:

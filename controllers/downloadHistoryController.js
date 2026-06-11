@@ -1,55 +1,79 @@
-const { Expense, DownloadHistory, User } = require("../models");
-const { uploadToS3 } = require("../services/s3Service");
-const { parse } = require("json2csv");
+const { Expense, DownloadHistory } = require('../models');
+const storageService = require('../services/storageService');
+const ApiError = require('../utils/ApiError');
+const catchAsync = require('../utils/catchAsync');
+const audit = require('../services/auditService');
 
-exports.downloadExpenseReport = async (req, res) => {
-    try {
-        const userId = req.user?.userId;
+// requirePremium middleware gates this route.
+const downloadExpenseReport = catchAsync(async (req, res) => {
+  const userId = req.user.userId;
 
-        // ✅ Check if user is Premium
-        const user = await User.findByPk(userId);
-        if (!user || !user.isPremium) {
-            return res.status(401).json({ success: false, message: "Access denied! Premium users only." });
-        }
+  const expenses = await Expense.findAll({
+    where: { userId },
+    order: [['occurredAt', 'DESC']],
+  });
 
-        // ✅ Fetch All Expenses
-        const expenses = await Expense.findAll({ where: { userId } });
+  if (!expenses.length) throw ApiError.notFound('No expenses to export');
 
-        if (!expenses.length) {
-            return res.status(404).json({ success: false, message: "No expenses found." });
-        }
+  // Format occurredAt as YYYY-MM-DD regardless of whether Sequelize returns a string or Date
+  const toDateStr = (v) => {
+    if (!v) return '';
+    if (v instanceof Date) return v.toISOString().slice(0, 10);
+    const s = String(v);
+    // 'YYYY-MM-DD' or 'YYYY-MM-DDTHH:mm:ss...' → take first 10 chars
+    return /^\d{4}-\d{2}-\d{2}/.test(s) ? s.slice(0, 10) : s;
+  };
 
-        // ✅ Convert Data to CSV
-        const csvData = parse(expenses.map(exp => ({
-            Date: exp.createdAt.toISOString(),
-            Description: exp.description,
-            Category: exp.type,
-            Amount: exp.expenseAmount
-        })));
+  const rows = expenses.map((e) => ({
+    Date: toDateStr(e.occurredAt),
+    Description: e.description,
+    Category: e.category,
+    Kind: e.kind,
+    Amount: (Number(e.amount) / 100).toFixed(2),
+  }));
 
-        // ✅ Upload CSV to S3
-        const fileName = `expenses_${userId}_${Date.now()}.csv`;
-        const uploadResponse = await uploadToS3(csvData, fileName);
+  // Build CSV manually to avoid json2csv API differences across versions
+  const headers = Object.keys(rows[0]);
+  const csvLines = [
+    headers.join(','),
+    ...rows.map((r) =>
+      headers.map((h) => `"${String(r[h]).replace(/"/g, '""')}"`).join(','),
+    ),
+  ];
+  const csvBuffer = Buffer.from(csvLines.join('\n'), 'utf8');
 
-        // ✅ Save download history
-        await DownloadHistory.create({ userId, fileUrl: uploadResponse.Location });
+  const filename = `expenses_${userId}_${Date.now()}.csv`;
+  const { fileUrl, sizeBytes } = await storageService.writeBuffer(csvBuffer, {
+    filename,
+    prefix: 'reports',
+    contentType: 'text/csv',
+  });
 
-        res.status(200).json({ success: true, fileUrl: uploadResponse.Location });
-    } catch (error) {
-        console.error("Error generating report:", error);
-        res.status(500).json({ success: false, message: "Server error." });
-    }
-};
+  await DownloadHistory.create({
+    userId,
+    fileUrl,
+    rowCount: expenses.length,
+    sizeBytes,
+  });
 
-// ✅ Fetch Download History
-exports.getDownloadHistory = async (req, res) => {
-    try {
-        const userId = req.user?.userId;
-        const history = await DownloadHistory.findAll({ where: { userId } });
+  await audit.record({
+    userId,
+    event: 'report.downloaded',
+    payload: { rowCount: expenses.length, sizeBytes },
+    req,
+  });
 
-        res.status(200).json({ success: true, history });
-    } catch (error) {
-        console.error("Error fetching history:", error);
-        res.status(500).json({ success: false, message: "Server error." });
-    }
-};
+  res.json({ message: 'Report generated', fileUrl, rowCount: expenses.length });
+});
+
+const getDownloadHistory = catchAsync(async (req, res) => {
+  const userId = req.user.userId;
+  const history = await DownloadHistory.findAll({
+    where: { userId },
+    order: [['createdAt', 'DESC']],
+    limit: 50,
+  });
+  res.json({ history });
+});
+
+module.exports = { downloadExpenseReport, getDownloadHistory };

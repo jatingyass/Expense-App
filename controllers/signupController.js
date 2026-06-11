@@ -1,33 +1,31 @@
-
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const { User } = require('../models');
+const ApiError = require('../utils/ApiError');
+const catchAsync = require('../utils/catchAsync');
+const audit = require('../services/auditService');
+const env = require('../config/env');
 
-// Signup User
-exports.signupUser = async (req, res) => {
-    const { name, email, password} = req.body;
+const signup = catchAsync(async (req, res) => {
+  const { name, email, password } = req.body;
 
-    if (!name || !email || !password) {
-        return res.status(400).json({ success: false, message: 'All fields are required!' });
-    }
+  const existing = await User.findOne({ where: { email } });
+  if (existing) throw ApiError.conflict('Email already in use');
 
-    try {
-        // Check if user already exists
-        const existingUser = await User.findOne({ where: { email } });
+  const hash = await bcrypt.hash(password, 12);
+  const user = await User.create({ name, email, password: hash });
 
-        if (existingUser) {
-            return res.status(409).json({ success: false, message: 'User already exists!' });
-        }
+  const token = jwt.sign({ userId: user.id }, env.JWT_SECRET, {
+    expiresIn: env.JWT_EXPIRES_IN,
+  });
 
-        // Hash password
-        const hashedPassword = await bcrypt.hash(password, 10);
+  await audit.record({ userId: user.id, event: 'user.signup', payload: { email }, req });
 
+  res.status(201).json({
+    message: 'Account created',
+    token,
+    user: { id: user.id, name: user.name, email: user.email, isPremium: user.isPremium },
+  });
+});
 
-        // Create new user using Sequelize
-        const newUser = await User.create({ name, email, password: hashedPassword, ispremium: false });
-
-        res.status(201).json({ success: true, message: 'Signup successful', userId: newUser.id });
-    } catch (error) {
-        console.error('Error during signup:', error);
-        res.status(500).json({ success: false, message: 'Error signing up' });
-    }
-};
+module.exports = { signup };

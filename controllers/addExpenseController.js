@@ -1,45 +1,29 @@
+const { Expense } = require('../models');
+const catchAsync = require('../utils/catchAsync');
+const audit = require('../services/auditService');
 
-const { Expense, User } = require('../models');
+const addExpense = catchAsync(async (req, res) => {
+  const { amount, description, category, kind, occurredAt, receiptUrl } = req.body;
+  const userId = req.user.userId;
 
-exports.addExpense = async (req, res) => {
-    const { amount, description, category } = req.body;
-    const userId = req.user?.userId;
+  const expense = await Expense.create({
+    userId,
+    amount,
+    description,
+    category,
+    kind,
+    occurredAt: occurredAt || new Date(),
+    receiptUrl: receiptUrl || null,
+  });
 
-    console.log('Received data:', req.body);
-    console.log('UserId:', userId);
+  await audit.record({
+    userId,
+    event: 'expense.created',
+    payload: { expenseId: expense.id, amount, category, kind },
+    req,
+  });
 
-    if (!amount || !description || !category) {
-        return res.status(400).json({ success: false, message: 'All fields are required!' });
-    }
+  res.status(201).json({ message: 'Expense added', expense });
+});
 
-    try {
-        const income = category === 'Salary' ? parseFloat(amount) : 0;
-        const expenseAmount = category !== 'Salary' ? parseFloat(amount) : 0;
-
-        const expense = await Expense.create({
-            income,
-            expenseAmount,
-            description,
-            type: category,
-            userId
-        });
-
-        console.log('Expense created:', expense);
-
-        // Update total income and expenses for user
-        const user = await User.findByPk(userId);
-        if (user) {
-            if (category === 'Salary') {
-                user.total_income = (user.total_income || 0) + parseFloat(amount);
-            } else {
-                user.total_cost = (user.total_cost || 0) + parseFloat(amount);
-            }
-            await user.save();
-        }
-
-        return res.status(201).json({ success: true, message: 'Expense added successfully!', expense });
-    } catch (error) {
-        console.error('Error adding expense:', error);
-        return res.status(500).json({ success: false, message: 'Failed to add expense' });
-    }
-};
+module.exports = { addExpense };
