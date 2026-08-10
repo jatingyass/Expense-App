@@ -1,51 +1,31 @@
-
-const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const {User} = require('../models');
+const jwt = require('jsonwebtoken');
+const { User } = require('../models');
+const ApiError = require('../utils/ApiError');
+const catchAsync = require('../utils/catchAsync');
+const audit = require('../services/auditService');
+const env = require('../config/env');
 
-const SECRET_KEY = 'my_super_secret_key_12345!@#';
+const login = catchAsync(async (req, res) => {
+  const { email, password } = req.body;
 
-exports.loginUser = async (req, res) => {
-    const { email, password } = req.body;
+  const user = await User.findOne({ where: { email } });
+  if (!user) throw ApiError.unauthorized('Invalid email or password');
 
-    if (!email || !password) {
-        return res.status(400).json({ success: false, message: 'Email and password are required' });
-    }
+  const match = await bcrypt.compare(password, user.password);
+  if (!match) throw ApiError.unauthorized('Invalid email or password');
 
-    try {
-        const user = await User.findOne({ where: { email } });
-        
-        if (!user) {
-            return res.status(404).json({ success: false, message: 'User not found' });
-        }
+  const token = jwt.sign({ userId: user.id }, env.JWT_SECRET, {
+    expiresIn: env.JWT_EXPIRES_IN,
+  });
 
-        if (!user.password) {
-            console.error('Password field is missing in the user record:', user);
-            return res.status(500).json({ success: false, message: 'User password is not set in the database' });
-        }
+  await audit.record({ userId: user.id, event: 'user.login', payload: { email }, req });
 
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(401).json({ success: false, message: 'Invalid password' });
-        }
+  res.json({
+    message: 'Login successful',
+    token,
+    user: { id: user.id, name: user.name, email: user.email, isPremium: user.isPremium },
+  });
+});
 
-        const token = jwt.sign({ 
-            userId: user.id,
-            isPremium: user.isPremium
-            },
-           SECRET_KEY,
-            { expiresIn: '1h' }
-        );
-
-        return res.status(200).json({
-            success: true,
-            message: 'Login successful',
-            token,
-            userId: user.id,
-            isPremium: user.isPremium
-        });
-    } catch (err) {
-        console.error('Server Error:', err.message);
-        return res.status(500).json({ success: false, message: 'Server error' });
-    }
-};
+module.exports = { login };

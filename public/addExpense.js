@@ -204,95 +204,7 @@ document.getElementById("expense-limit").addEventListener("change", (event) => {
 });
 
 //--------------download functionality------------------------
-// document.getElementById("download-btn").addEventListener("click", function () {
-//     let pagesToDownload = parseInt(prompt(`Enter the number of pages to download (Max: ${totalPages}):`), 10);
 
-//     if (!pagesToDownload || pagesToDownload < 1 || pagesToDownload > totalPages) {
-//         alert(`Invalid input! Please enter a number between 1 and ${totalPages}`);
-//         return;
-//     }
-
-//     downloadTableAsPDF(pagesToDownload);
-// });
-
-// function downloadTableAsPDF(pagesToDownload) {
-//     const { jsPDF } = window.jspdf;
-//     const doc = new jsPDF();
-//     let allExpenses = [];
-
-//     function fetchPage(page) {
-//         return axios.get(`/api/fetch-expenses?page=${page}&limit=${itemsPerPage}`, {
-//             headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-//         }).then(res => res.data.expenses);
-//     }
-
-//     // Fetch multiple pages
-//     const fetchPromises = [];
-//     for (let i = 1; i <= pagesToDownload; i++) {
-//         fetchPromises.push(fetchPage(i));
-//     }
-
-//     Promise.all(fetchPromises).then(pages => {
-//         pages.forEach(expenses => {
-//             allExpenses = allExpenses.concat(expenses);
-//         });
-
-//         if (allExpenses.length === 0) {
-//             alert("No expenses found to download.");
-//             return;
-//         }
-
-//         doc.setFont("helvetica", "normal");
-//         doc.text("Expense Report", 14, 10); // Title
-
-//         const headers = ["Date", "Description", "Type", "Income (Rs.)", "Expense (Rs.)"];
-//         let data = [];
-//         let totalIncome = 0;
-//         let totalExpense = 0;
-
-//         // Format and push data into table
-//         allExpenses.forEach(expense => {
-//             const date = new Date(expense.createdAt).toLocaleDateString();
-//             const income = parseFloat(expense.income || 0);
-//             const amount = parseFloat(expense.expenseAmount || 0);
-//             const category = expense.type || "Unknown";
-
-//             data.push([date, expense.description, category, `Rs. ${income.toFixed(2)}`, `Rs. ${amount.toFixed(2)}`]);
-
-//             totalIncome += income;
-//             totalExpense += amount;
-//         });
-
-//         let totalSavings = totalIncome - totalExpense;
-
-//         // Add Total and Savings Rows
-//         data.push(["", "", "Total", `Rs. ${totalIncome.toFixed(2)}`, `Rs. ${totalExpense.toFixed(2)}`]);
-//         data.push(["", "", "", "", `Savings = Rs. ${totalSavings.toFixed(2)}`]);
-
-//         // Generate PDF Table
-//         doc.autoTable({
-//             head: [headers],
-//             body: data,
-//             startY: 20,
-//             theme: "grid",
-//             styles: { fontSize: 10 },
-//         });
-
-//         const pdfFileName = `Expenses_Report_${new Date().toISOString()}.pdf`;
-//         doc.save(pdfFileName);
-
-//         // ✅ Send download record to backend
-//         axios.post('/download-history', { link: pdfFileName })
-//             .then(() => console.log("Download history saved successfully"))
-//             .catch(err => console.error("Error saving download history:", err));
-//     }).catch(err => {
-//         console.error("Error downloading expenses:", err);
-//         alert("Error downloading expenses");
-//     });
-// }
-
-
-//=======================new code for download=============================
 document.getElementById("download-btn").addEventListener("click", function () {
     const token = localStorage.getItem("token");
 
@@ -374,7 +286,7 @@ document.getElementById('rzp-btn').onclick = async function (e) {
 
     try {
         // Fetch order details from backend
-        const response = await axios.get('http://localhost:3000/purchase/premiummembership', {
+        const response = await axios.get('http://65.2.83.37:3000/purchase/premiummembership', {
             headers: { "Authorization": `Bearer ${token}` }
         });
 
@@ -395,7 +307,7 @@ document.getElementById('rzp-btn').onclick = async function (e) {
             handler: async function (response) {
                 try {
                     // Update transaction status on success
-                    await axios.post('http://localhost:3000/purchase/updatetransactionstatus', {
+                    await axios.post('http://65.2.83.37:3000/purchase/updatetransactionstatus', {
                         order_id: order.id,
                         payment_id: response.razorpay_payment_id,
                         status: 'SUCCESSFUL'
@@ -434,7 +346,7 @@ document.getElementById('rzp-btn').onclick = async function (e) {
         // Handle Payment Failure
         rzp.on('payment.failed', async function (response) {
             try {
-                await axios.post('http://localhost:3000/purchase/updatetransactionstatus', {
+                await axios.post('http://65.2.83.37:3000/purchase/updatetransactionstatus', {
                     order_id: order.id,
                     payment_id: response?.error?.metadata?.payment_id || 'N/A',
                     status: 'FAILED'

@@ -1,90 +1,24 @@
-// // const mysql = require('mysql2');
-
-// // const db = mysql.createConnection({
-// //     host: 'localhost',
-// //     user: 'root',
-// //     password: 'Jatin@1234',
-// //     database: 'expense'
-// // });
-
-// // db.connect((err) => {
-// //     if(err){
-// //         console.log('Database connection failed:', err);
-// //     }
-// //     console.log('Connected to mysql database!');
-// // });
-
-// // module.exports = db;
-
-// const mysql = require('mysql2/promise');
-
-// const db = mysql.createPool({
-//     host: 'localhost',
-//     user: 'root',
-//     password: 'Jatin@123',
-//     database: 'expense'
-// });
-
-// db.getConnection((err, connection) => {
-//     if(err){
-//         console.log('Database connection failed:', err);
-//     }
-//     console.log('Connected to mysql database!');
-//     connection.release();
-// });
-
-// // Use the connection pool to execute queries
-// async function executeQuery(query, params) {
-//     try {
-//         const connection = await db.getConnection();
-//         const result = await connection.execute(query, params);
-//         connection.release();
-//         return result;
-//     } catch (err) {
-//         console.error('Database error:', err);
-//         throw err;
-//     }
-// }
-
-// module.exports = { db, executeQuery };
-
-
-
-
-// require('dotenv').config(); 
-// const { Sequelize } = require('sequelize');
-
-// const sequelize = new Sequelize('expenseZ', 'root', 'Jatin@123', {
-//   host: 'localhost',
-//   dialect: 'mysql'
-// });
-
-// sequelize.authenticate()
-//   .then(() => console.log('Database connected successfully!'))
-//   .catch(err => console.error('Database connection error:', err));
-
-// module.exports = sequelize;
-
-
-
-
-// database.js ya db.js (jo bhi tu use kar raha hai)
-require('dotenv').config(); // IMPORTANT
-
 const { Sequelize } = require('sequelize');
+const env = require('./env');
+const logger = require('../utils/logger');
 
-const sequelize = new Sequelize(
-  process.env.DB_NAME,
-  process.env.DB_USER,
-  process.env.DB_PASSWORD,
-  {
-    host: process.env.RDS_ENDPOINT,
-    dialect: process.env.DIALECT
+const sequelize = new Sequelize(env.DB_NAME, env.DB_USER, env.DB_PASSWORD, {
+  host: env.DB_HOST,
+  port: env.DB_PORT,
+  dialect: 'mysql',
+  logging: env.NODE_ENV === 'development' ? (msg) => logger.debug(msg) : false,
+  pool: { max: 10, min: 0, acquire: 30000, idle: 10000 },
+  define: { charset: 'utf8mb4', collate: 'utf8mb4_unicode_ci' },
+});
+
+const connect = async () => {
+  try {
+    await sequelize.authenticate();
+    logger.info('Database connection established');
+  } catch (err) {
+    logger.error(`Database connection failed: ${err.message}`);
+    throw err;
   }
-);
+};
 
-sequelize.authenticate()
-  .then(() => console.log('✅ Database connected successfully!'))
-  .catch(err => console.error('❌ Database connection error:', err));
-
-module.exports = sequelize;
+module.exports = { sequelize, connect };

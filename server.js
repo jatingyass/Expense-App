@@ -1,59 +1,35 @@
-const express = require('express');
-const path = require('path');
-const bodyParser = require('body-parser');
-const db = require('./config/db');
+const { connect } = require('./config/db');
 const { sequelize } = require('./models');
+const createApp = require('./app');
+const env = require('./config/env');
+const logger = require('./utils/logger');
 
-// Initialize app
-const app = express();
+const main = async () => {
+  await connect();
 
-// Middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
+  // alter:true migrates schema without dropping data (dev only)
+  await sequelize.sync({ alter: env.NODE_ENV === 'development' });
+  logger.info('database synced');
 
-// Import routes
-const checkEmailRoute = require('./routes/checkEmailRoute');
-const signupRoute = require('./routes/singnupRoute');
-const loginRoute = require('./routes/loginRoute');
-const addExpenseRoute = require('./routes/addExpenseRoute');
-const getExpensesRoute = require('./routes/getExpensesRoute');
-const deleteExpenseRoute = require('./routes/deleteExpenseRoute');
-const authRoutes = require('./middleware/auth');
-const razorpayRoute = require('./routes/razorpayRoute'); // Import Razorpay route
-const leaderboardRoutes = require('./routes/leaderboardRoute');
-const forgotPasswordRoute = require("./routes/forgotPasswordRoute");
-const downloadHistoryRoute = require('./routes/downloadRoutes');
-
-
-
-// Use routes
-app.use('/', checkEmailRoute);
-app.use('/', signupRoute);
-app.use('/login', loginRoute);
-app.use('/', addExpenseRoute);
-app.use('/api', getExpensesRoute);
-app.use('/delete-expense', deleteExpenseRoute);
-app.use('/api/auth', authRoutes);
-app.use('/purchase', razorpayRoute); // Use Razorpay route
-app.use('/leaderboard', leaderboardRoutes);
-app.use("/password", forgotPasswordRoute);
-app.use('/api', downloadHistoryRoute);
-
-// app.get('/leaderboard', (req, res) => {
-//     console.log(req.headers); // Check if the request has correct headers
-//     res.send('Leaderboard data');
-// });
-
-sequelize.sync()
-  .then(() => {
-    console.log('Database synced!');
-  })
-  .catch((err) => {
-    console.error('Error syncing database:', err);
+  const app = createApp();
+  const server = app.listen(env.PORT, () => {
+    logger.info(`server listening on port ${env.PORT} [${env.NODE_ENV}]`);
   });
 
-// Start server
-app.listen(3000, () => {
-    console.log(`Server is running on http://localhost:3000`);
+  const shutdown = (signal) => {
+    logger.info(`${signal} — shutting down gracefully`);
+    server.close(async () => {
+      await sequelize.close();
+      logger.info('db connection closed');
+      process.exit(0);
+    });
+  };
+
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
+};
+
+main().catch((err) => {
+  console.error('startup failed:', err);
+  process.exit(1);
 });
